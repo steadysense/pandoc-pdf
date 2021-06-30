@@ -1,0 +1,21 @@
+# pdf-generator.yml
+name: 'md-to-pdf-converter'
+description: 'Generate pdf files based on latex qm templates and project documentation files.'
+
+inputs:
+  template-volume:  # id of input
+    description: 'Volume containing the qm-latex-templates'
+    required: true
+    default: '`pwd`:/data'
+
+  document-volume:  # id of input
+    description: 'Volume containing the documents to convert'
+    required: true
+    default: 'data/documents/'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.template-volume }}:data
+    - ${{ inputs.document-volume }}
