@@ -13,8 +13,9 @@ This action converts markdown files to pdf files using pandoc.
 
 
 ## Example usage
-
+```
 uses: actions/pandoc-pdf@v1
 with:
   template-volume: '/QM-documents'
   document-volume: '/00_Working_Documents'
+```
