@@ -1,13 +1,11 @@
 #!/bin/sh -l
 
 echo "Template files"
-ls -la
-echo "$(template-volume)"
+echo "$1"
 
 
 echo "Files to convert"
-echo "$(template-volume)"
+echo "$2"
 
-printenv
 
 #./build.sh --all

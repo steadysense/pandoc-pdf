@@ -2,7 +2,7 @@ name: Create and publish Docker image
 
 on:
   push:
-    branches: ['main']
+    release: ['main']
 
 env:
   REGISTRY: docker.pkg.github.com
