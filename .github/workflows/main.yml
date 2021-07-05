@@ -26,7 +26,7 @@ jobs:
           username: steadysensedev
           password: ${{ secrets.GH_PKG_REGISTRY_TOKEN }}
 
-      - name: Publish images to github registry
+      - name: Publish image to github registry
         if: success()
         run: |
           docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --progress "plain" --rm=false .

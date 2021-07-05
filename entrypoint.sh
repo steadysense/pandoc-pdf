@@ -2,8 +2,10 @@
 
 echo "Template files"
 ls -la
+echo "$template-volume"
+
 
 echo "Files to convert"
-ls -la
+echo "$document-volume"
 
 #./build.sh --all
