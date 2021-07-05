@@ -2,12 +2,11 @@
 
 echo "Template files"
 ls -la
-echo "$(template-volume)"
+echo "$(INPUT_TEMPLATE-VOLUME)"
 
 
 echo "Files to convert"
-echo "$(template-volume)"
+echo "$(INPUT_DOCUMENT-VOLUME)"
 
-printenv
 
 #./build.sh --all
