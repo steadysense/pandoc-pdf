@@ -2,8 +2,10 @@
 
 set -euf -o pipefail
 
-pwd
+echo "Template directory file:"
 ls -la "templates"
+
+echo "Github workspace files:"
 ls -la "/github/workspace"
 
 for f in $(find "/documents" -name "*.md" | grep "FB\|PB\|DA"); do
