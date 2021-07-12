@@ -2,7 +2,7 @@
 
 set -euf -o pipefail
 
-env | sort
+pwd
 ls -la
 
 for f in $(find "/documents" -name "*.md" | grep "FB\|PB\|DA"); do
