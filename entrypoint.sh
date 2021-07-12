@@ -2,11 +2,14 @@
 
 set -euf -o pipefail
 
+echo "Github workspace files:"
+ls -la "/github/workspace"
+
 echo "Template directory file:"
 ls -la "templates"
 
-echo "Github workspace files:"
-ls -la "/github/workspace"
+echo "Documents to convert:"
+ls -la "documents"
 
 for f in $(find "/documents" -name "*.md" | grep "FB\|PB\|DA"); do
   echo "Converting $f"
