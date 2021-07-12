@@ -1,11 +1,13 @@
 #!/bin/sh -l
 
 echo "Template files"
-echo "$1"
+echo "Changing pwd to $1"
+cd "$(dirname "$1")"
 
-
-echo "Files to convert"
+echo "Directory of files to convert"
 echo "$2"
 
+for f in $(find $2 -name "*.md" | grep "FB\|PB\|DA"); do
+  build.sh $f
+done
 
-#./build.sh --all

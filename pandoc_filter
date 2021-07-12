@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+
+from panflute import *
+import re
+
+def action(elem, doc):
+    if isinstance(elem, Str):
+        # remove [TOC] (is added directly in latex template)
+        if "[TOC]" in elem.text:
+            return []
+
+        # replace emoji-strings for latex emoji-package compatibility
+        if re.match(":\w*:", elem.text) is not None:
+            if ":white_check_mark:" in elem.text:
+                elem.text = ":check-mark-button:"
+            return RawInline(text="\emoji{" + elem.text.strip(":") + "}", format="tex")
+
+def main():
+    return run_filter(action)
+
+
+if __name__ == '__main__':
+    main()
