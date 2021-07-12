@@ -1,4 +1,4 @@
-#!/bin/sh -l -x
+#!/bin/sh -l
 
 set -euf -o pipefail
 
