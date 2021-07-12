@@ -3,17 +3,17 @@ name: 'pandoc-pdf'
 description: 'Generate pdf files based on latex qm templates and markdown files.'
 
 inputs:
-  template-volume:  # id of input
-    description: 'Volume containing the qm latex templates'
+  template-directory:  # id of input
+    description: 'Directory containing the qm latex templates'
     required: true
 
-  document-volume:  # id of input
-    description: 'Volume containing the documents to convert'
+  document-directory:  # id of input
+    description: 'Directory containing the documents to convert'
     required: true
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - ${{ inputs.template-volume }}:/data
-    - ${{ inputs.document-volume }}:/data/documents
+    - ${{ inputs.template-directory }}:/data
+    - ${{ inputs.document-directory }}:/data/documents

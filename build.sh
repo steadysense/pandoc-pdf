@@ -57,7 +57,6 @@ mkpdf () {
 }
 
 
-
 if [[ $1 = "-h" || $1 = "--help" ]]; then
     echo "$HELP"
     exit 0

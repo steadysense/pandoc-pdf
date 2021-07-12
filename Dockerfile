@@ -10,6 +10,8 @@ RUN pip3 install -r /requirements.txt
 
 RUN tlmgr install $(cat /texpkgs.txt)
 
+WORKDIR /data
+
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /entrypoint.sh
 
