@@ -7,7 +7,7 @@ ls -la "/github/workspace"
 
 echo "Template directory file:"
 #ls -la "/github/workspace/$1"
-ls -la "/github/workspace/templates"
+ls -la "/github/workspace/templates/QM-"
 
 echo "Documents to convert:"
 #ls -la "/github/workspace/$2"
