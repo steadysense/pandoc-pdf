@@ -2,5 +2,3 @@
 
 set -euf -o pipefail
 
-build.sh
-

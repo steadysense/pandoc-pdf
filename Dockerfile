@@ -12,7 +12,8 @@ RUN tlmgr install $(cat /texpkgs.txt)
 
 WORKDIR /data
 
-#CMD ./build.sh
+ENTRYPOINT [""]
+CMD ./build.sh
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 #COPY entrypoint.sh /entrypoint.sh
