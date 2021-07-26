@@ -14,4 +14,3 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  options: '-v ${{ inputs.template-directory }}:/data -v ${{ inputs.document-directory }}:/data/documents'
