@@ -9,7 +9,7 @@ echo "Env:"
 env
 
 echo "Find:"
-find . -path '**/.git' -prune -false -o -name '*'
+find .
 
 echo "Tree:"
 tree
