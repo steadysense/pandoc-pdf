@@ -2,10 +2,17 @@
 
 set -euf -o pipefail
 
-echo "$(pwd)"
-echo "$(ls -la)"
+echo "pwd:"
+pwd
 
-echo "$(env)"
+echo "Env:"
+env
+
+echo "Find:"
+find . -path '**/.git' -prune -false -o -name '*'
+
+echo "Tree:"
+tree
 
 echo "Document Directory: $INPUT_DOCUMENT_DIRECTORY"
 echo "Template Directory: $INPUT_TEMPLATE_DIRECTORY"
