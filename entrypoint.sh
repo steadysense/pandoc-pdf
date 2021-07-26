@@ -13,5 +13,7 @@ cd "${INPUT_TEMPLATE_DIRECTORY}"
 
 echo '$@:' "$@" "$DOCUMENT_DIR"
 
-exec "$@" "$DOCUMENT_DIR"
+arr=("$@" "$DOCUMENT_DIR")
+
+exec "${arr[@]}"
 
