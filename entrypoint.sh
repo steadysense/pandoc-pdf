@@ -11,5 +11,7 @@ echo "Document Directory: $DOCUMENT_DIR"
 
 cd "${INPUT_TEMPLATE_DIRECTORY}"
 
-exec "$DOCUMENT_DIR"
+ech '$@:' "$@" "$DOCUMENT_DIR"
+
+exec "$@" "$DOCUMENT_DIR"
 
