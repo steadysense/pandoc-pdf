@@ -3,11 +3,11 @@ name: 'pandoc-pdf'
 description: 'Generate pdf files based on latex qm templates and markdown files.'
 
 inputs:
-  template-directory:  # id of input
+  template_directory:  # id of input
     description: 'Directory containing the qm latex templates'
     required: true
 
-  document-directory:  # id of input
+  document_directory:  # id of input
     description: 'Directory containing the documents to convert'
     required: true
 
