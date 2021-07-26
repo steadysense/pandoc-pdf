@@ -2,20 +2,11 @@
 
 set -euf -o pipefail
 
-echo "pwd:"
-pwd
-
-echo "Env:"
-env
-
-echo "Find:"
-find .
-
 echo "Document Directory: $INPUT_DOCUMENT_DIRECTORY"
 echo "Template Directory: $INPUT_TEMPLATE_DIRECTORY"
 
 DOCUMENT_GLOB="$(pwd)/$INPUT_DOCUMENT_DIRECTORY/"'**/*.md'
 
 cd "${INPUT_TEMPLATE_DIRECTORY}"
-exec "$@" "${DOCUMENT_GLOB}"
+exec "$@" --all  # "${DOCUMENT_GLOB}"
 
