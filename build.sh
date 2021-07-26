@@ -58,6 +58,13 @@ mkpdf () {
 
 
 echo "Working Directory $(pwd)"
+echo "$@"
+
+for arg in "$@"; do
+  echo "$arg";
+done
+
+echo "Finished checking args"
 
 if [[ $1 = "-h" || $1 = "--help" ]]; then
     echo "$HELP"
