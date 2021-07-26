@@ -49,7 +49,7 @@ mkpdf () {
     --toc \
 	--listings \
     --filter pandoc_filter \
-    --resource-path=$RESOURCE_PATH \
+    --resource-path="$ORIG_PATH:$RESOURCE_PATH" \
 	--pdf-engine=lualatex \
 	--variable build-version=${VERSION}
 
