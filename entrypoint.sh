@@ -10,7 +10,7 @@ echo "$(env)"
 echo "Document Directory: $INPUT_DOCUMENT_DIRECTORY"
 echo "Template Directory: $INPUT_TEMPLATE_DIRECTORY"
 
-let DOCUMENT_GLOB = "$(pwd)/$INPUT_DOCUMENT_DIRECTORY/**/*.md"
+DOCUMENT_GLOB="$(pwd)/$INPUT_DOCUMENT_DIRECTORY/"'**/*.md'
 
 cd "${INPUT_TEMPLATE_DIRECTORY}"
 exec "$@" "${DOCUMENT_GLOB}"
