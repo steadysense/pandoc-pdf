@@ -1,9 +1,5 @@
 #!/bin/bash
 
-ls -la /usr/local/bin
-
-env
-
 HELP=$(cat <<-END
 Usage: ./build.sh [OPTIONS] [ARGUMENTS]
 
