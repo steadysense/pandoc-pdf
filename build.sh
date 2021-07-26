@@ -17,19 +17,19 @@ END
 )
 
 pushd () {
-    command pushd "$@" > /dev/null
+    command pushd "$@" || exit 1 > /dev/null
 }
 
 popd () {
-    command popd "$@" > /dev/null
+    command popd || exit 1 > /dev/null
 }
 
 mkpdf () {
   ORIG_PATH=$(pwd)
 
-  pushd "$(dirname "$0")"
-  FILENAME=`basename "$1"`
-  RESOURCE_PATH="$(dirname $1)"
+  pushd "$(dirname "$0")" || exit 1
+  FILENAME=$(basename "$1")
+  RESOURCE_PATH=$(dirname "$1")
   if [[ $RESOURCE_PATH = "." ]]; then
     RESOURCE_PATH=""
   fi
@@ -39,21 +39,25 @@ mkpdf () {
   INPUT="${ORIG_PATH}/${RESOURCE_PATH}/${FILENAME}"
   OUTPUT="${OUTPUT_PATH}/$(echo ${FILENAME} | sed 's/md/pdf/')"
 
+  echo "ORIG_PATH $ORIG_PATH"
+  echo "RESOURCE_PATH $RESOURCE_PATH"
+  echo "FILENAME $FILENAME"
+
   echo "Converting ${INPUT} to ${OUTPUT}"
 
-  mkdir -p $OUTPUT_PATH
-  pandoc $INPUT \
-    -o $OUTPUT \
+  mkdir -p "$OUTPUT_PATH"
+  pandoc "$INPUT" \
+    -o "$OUTPUT" \
     --top-level-division=chapter \
-    --template=$TEMPLATE_NAME \
+    --template="$TEMPLATE_NAME" \
     --toc \
 	--listings \
     --filter pandoc_filter \
-    --resource-path="$ORIG_PATH:$RESOURCE_PATH" \
+    --resource-path=".:$RESOURCE_PATH" \
 	--pdf-engine=lualatex \
-	--variable build-version=${VERSION}
+	--variable build-version="$VERSION"
 
-  popd
+  popd || exit 1
 }
 
 
