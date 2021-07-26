@@ -57,15 +57,22 @@ mkpdf () {
 }
 
 
+echo "Working Directory $(pwd)"
+
+
 if [[ $1 = "-h" || $1 = "--help" ]]; then
     echo "$HELP"
     exit 0
 fi
 
 if [[ $# -eq 0 || $1 = "--all" ]]; then
-    for f in $(find . -name "*.md" | grep "FB\|PB\|DA"); do
-        mkpdf $f
+    echo "Searching documents in $2"
+    for f in $(find "$2" -name "*.md" | grep "FB\|PB\|DA"); do
+        mkpdf "${f}"
     done
 else
-    mkpdf $1
+  echo "Searching documents in $1"
+  for f in $(find "$1" -name "*.md" | grep "FB\|PB\|DA"); do
+    mkpdf "${f}"
+  done
 fi

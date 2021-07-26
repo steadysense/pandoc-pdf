@@ -1,12 +1,13 @@
-#!/bin/sh -l
+#!/bin/bash -l
 
 set -euf -o pipefail
 
 echo "Document Directory: $INPUT_DOCUMENT_DIRECTORY"
 echo "Template Directory: $INPUT_TEMPLATE_DIRECTORY"
 
-DOCUMENT_GLOB="$(pwd)/$INPUT_DOCUMENT_DIRECTORY/"'**/*.md'
+DOCUMENT_DIR="$(pwd)$INPUT_DOCUMENT_DIRECTORY/"
 
 cd "${INPUT_TEMPLATE_DIRECTORY}"
-exec "$@" --all  # "${DOCUMENT_GLOB}"
+
+exec "$@" "$DOCUMENT_DIR"
 
