@@ -2,3 +2,5 @@
 
 set -euf -o pipefail
 
+exec "$@"
+
