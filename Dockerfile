@@ -10,6 +10,8 @@ RUN pip3 install -r /requirements.txt
 
 RUN tlmgr install $(cat /texpkgs.txt)
 
+RUN apk add parallel
+
 RUN mkdir -p /github/workspace
 WORKDIR /github/workspace
 

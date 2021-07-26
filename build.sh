@@ -16,11 +16,21 @@ Examples:
 END
 )
 
-pushd () {
+logd () {
+  if [[ $DEBUG ]]; then
+    logd "$@";
+  fi
+}
+
+logi () {
+  echo "$@";
+}
+
+spushd () {
     command pushd "$@" || exit 1 > /dev/null
 }
 
-popd () {
+spopd () {
     command popd || exit 1 > /dev/null
 }
 
@@ -32,54 +42,49 @@ mkpdf () {
   INPUT_PATH=$(dirname "$INPUT")
   OUTPUT=${ORIG_PATH}/build${INPUT#$DOCUMENT_DIR}
   OUTPUT=${OUTPUT//.md/.pdf}
-  OUTPUT_PATH=$(dirname ${OUTPUT})
-  echo "INPUT $INPUT"
-  echo "INPUT_FILE $INPUT_FILE"
-  echo "INPUT_PATH $INPUT_PATH"
-  echo "OUTPUT_PATH $OUTPUT_PATH"
-  echo "OUTPUT $OUTPUT"
+  OUTPUT_PATH=$(dirname "${OUTPUT}")
+  logd "INPUT $INPUT"
+  logd "INPUT_FILE $INPUT_FILE"
+  logd "INPUT_PATH $INPUT_PATH"
+  logd "OUTPUT_PATH $OUTPUT_PATH"
+  logd "OUTPUT $OUTPUT"
 
   PANDOC_TEMPLATE="main.tex"
   PANDOC_FILTER="/usr/local/bin/pandoc_filter"
-  PANDOC_TEMPLATE_DIR="$TEMPLATE_DIR"
-
-  echo "Converting ${INPUT} to ${OUTPUT}"
 
   mkdir -p "$OUTPUT_PATH"
-  pushd "$INPUT_PATH" || exit 1
 
+  logi "Converting ${INPUT} to ${OUTPUT}"
+  spushd "$INPUT_PATH"
   pandoc "$INPUT_FILE" \
     -o "$OUTPUT" \
     --top-level-division=chapter \
     --template="$PANDOC_TEMPLATE" \
     --toc \
-	--listings \
+    --listings \
     --filter "$PANDOC_FILTER" \
-    --resource-path="$PANDOC_TEMPLATE_DIR" \
-  --data=dir="$PANDOC_TEMPLATE_DIR" \
-	--pdf-engine=lualatex \
-	--variable build-version="$VERSION"
-
-  popd || exit 1
+    --resource-path="$TEMPLATE_DIR" \
+    --data=dir="$TEMPLATE_DIR" \
+    --pdf-engine=lualatex \
+    --variable build-version="$VERSION"
+  spopd
 }
 
+export -f mkpdf logi logd spushd spopd
 
-echo "Working Directory $(pwd)"
-echo "$@"
+logd "Working Directory $(pwd)"
+logd "$@"
 
 for arg in "$@"; do
-  echo "$arg";
+  logd "$arg";
 done
 
-echo "Finished checking args"
+logd "Finished checking args"
 
 if [[ $1 = "-h" || $1 = "--help" ]]; then
-    echo "$HELP"
+    logd "$HELP"
     exit 0
 fi
 
-echo "Searching documents in DOCUMENT_DIR $DOCUMENT_DIR"
-for f in $(find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA"); do
-  echo "$f"
-  mkpdf "${f}"
-done
+logd "Searching documents in DOCUMENT_DIR $DOCUMENT_DIR"
+find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA" | parallel --jobs 200% mkpdf {}
