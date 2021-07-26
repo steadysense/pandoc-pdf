@@ -15,5 +15,5 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - ${{ inputs.template-directory }}:/data
-    - ${{ inputs.document-directory }}:/data/documents
+    - "-v ${{ inputs.template-directory }}:/data"
+    - "-v ${{ inputs.document-directory }}:/data/documents"
