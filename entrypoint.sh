@@ -11,9 +11,6 @@ env
 echo "Find:"
 find .
 
-echo "Tree:"
-tree
-
 echo "Document Directory: $INPUT_DOCUMENT_DIRECTORY"
 echo "Template Directory: $INPUT_TEMPLATE_DIRECTORY"
 
