@@ -59,7 +59,6 @@ mkpdf () {
 
 echo "Working Directory $(pwd)"
 
-
 if [[ $1 = "-h" || $1 = "--help" ]]; then
     echo "$HELP"
     exit 0
