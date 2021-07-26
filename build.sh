@@ -1,4 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+ls -la /usr/local/bin
+
+env
 
 HELP=$(cat <<-END
 Usage: ./build.sh [OPTIONS] [ARGUMENTS]
@@ -27,33 +31,36 @@ popd () {
 mkpdf () {
   ORIG_PATH=$(pwd)
 
-  pushd "$(dirname "$0")" || exit 1
-  FILENAME=$(basename "$1")
-  RESOURCE_PATH=$(dirname "$1")
-  if [[ $RESOURCE_PATH = "." ]]; then
-    RESOURCE_PATH=""
-  fi
+  INPUT="$1"
+  INPUT_FILE=$(basename "$INPUT")
+  INPUT_PATH=$(dirname "$INPUT")
+  OUTPUT=${ORIG_PATH}/build${INPUT#$DOCUMENT_DIR}
+  OUTPUT=${OUTPUT//.md/.pdf}
+  OUTPUT_PATH=$(dirname ${OUTPUT})
+  echo "INPUT $INPUT"
+  echo "INPUT_FILE $INPUT_FILE"
+  echo "INPUT_PATH $INPUT_PATH"
+  echo "OUTPUT_PATH $OUTPUT_PATH"
+  echo "OUTPUT $OUTPUT"
 
-  OUTPUT_PATH="${ORIG_PATH}/build"
-  TEMPLATE_NAME="main.tex"
-  INPUT="${ORIG_PATH}/${RESOURCE_PATH}/${FILENAME}"
-  OUTPUT="${OUTPUT_PATH}/$(echo ${FILENAME} | sed 's/md/pdf/')"
-
-  echo "ORIG_PATH $ORIG_PATH"
-  echo "RESOURCE_PATH $RESOURCE_PATH"
-  echo "FILENAME $FILENAME"
+  PANDOC_TEMPLATE="main.tex"
+  PANDOC_FILTER="/usr/local/bin/pandoc_filter"
+  PANDOC_TEMPLATE_DIR="$TEMPLATE_DIR"
 
   echo "Converting ${INPUT} to ${OUTPUT}"
 
   mkdir -p "$OUTPUT_PATH"
-  pandoc "$INPUT" \
+  pushd "$INPUT_PATH" || exit 1
+
+  pandoc "$INPUT_FILE" \
     -o "$OUTPUT" \
     --top-level-division=chapter \
-    --template="$TEMPLATE_NAME" \
+    --template="$PANDOC_TEMPLATE" \
     --toc \
 	--listings \
-    --filter pandoc_filter \
-    --resource-path=".:$RESOURCE_PATH" \
+    --filter "$PANDOC_FILTER" \
+    --resource-path="$PANDOC_TEMPLATE_DIR" \
+  --data=dir="$PANDOC_TEMPLATE_DIR" \
 	--pdf-engine=lualatex \
 	--variable build-version="$VERSION"
 
@@ -75,14 +82,8 @@ if [[ $1 = "-h" || $1 = "--help" ]]; then
     exit 0
 fi
 
-if [[ $# -eq 0 || $1 = "--all" ]]; then
-    echo "Searching documents in $2"
-    for f in $(find "$2" -name "*.md" | grep "FB\|PB\|DA"); do
-        mkpdf "${f}"
-    done
-else
-  echo "Searching documents in $1"
-  for f in $(find "$1" -name "*.md" | grep "FB\|PB\|DA"); do
-    mkpdf "${f}"
-  done
-fi
+echo "Searching documents in DOCUMENT_DIR $DOCUMENT_DIR"
+for f in $(find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA"); do
+  echo "$f"
+  mkpdf "${f}"
+done

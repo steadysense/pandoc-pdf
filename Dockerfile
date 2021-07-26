@@ -10,12 +10,16 @@ RUN pip3 install -r /requirements.txt
 
 RUN tlmgr install $(cat /texpkgs.txt)
 
+RUN mkdir -p /github/workspace
 WORKDIR /github/workspace
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
-COPY entrypoint.sh /entrypoint.sh
-COPY build.sh /build.sh
+COPY entrypoint.sh /usr/local/bin/
+COPY build.sh /usr/local/bin/
+COPY pandoc_filter /usr/local/bin/
 
 # Code file to execute when the docker container starts up (`entrypoint.sh`)
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/build.sh"]
+#ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]
+#CMD ["/build.sh"]
+CMD build.sh
