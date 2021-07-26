@@ -12,7 +12,6 @@ echo "Template Directory: $INPUT_TEMPLATE_DIRECTORY"
 TEMPLATE_DIR="$(realpath "$INPUT_TEMPLATE_DIRECTORY")"
 echo "Template Directory: $TEMPLATE_DIR"
 export TEMPLATE_DIR
-TEMPLATE_DIR="$(realpath "$INPUT_TEMPLATE_DIRECTORY")"
 
 export TEXINPUTS=".:$TEMPLATE_DIR:"
 
