@@ -3,7 +3,7 @@
 set -euf -o pipefail
 
 echo "$(pwd)"
-echo ""$(ls -la)"
+echo "$(ls -la)"
 
 exec "$@"
 
