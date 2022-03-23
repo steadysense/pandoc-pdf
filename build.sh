@@ -87,4 +87,4 @@ if [[ $1 = "-h" || $1 = "--help" ]]; then
 fi
 
 logd "Searching documents in DOCUMENT_DIR $DOCUMENT_DIR"
-find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA" | parallel --jobs 200% mkpdf {}
+find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA\|AA\|QMH" | parallel --jobs 200% mkpdf {}
