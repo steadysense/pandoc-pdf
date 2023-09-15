@@ -1,6 +1,6 @@
 FROM pandoc/latex:2.14
 
-RUN wget -P /usr/share/fonts/ https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf
+RUN wget -q -P /usr/share/fonts/ https://github.com/samuelngs/apple-emoji-linux/releases/latest/download/AppleColorEmoji.ttf
 RUN apk add texmf-dist python3 py3-pip bash fontconfig ttf-dejavu msttcorefonts-installer && update-ms-fonts && fc-cache -f
 
 COPY ./requirements.txt /
