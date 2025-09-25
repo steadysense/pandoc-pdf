@@ -35,6 +35,7 @@ docker run -it  \
   -v "$PATH-DOCUMENT-DIRECTORY:/github/workspace/documents" \
   --env INPUT_DOCUMENT_DIRECTORY="documents/" \
   --env INPUT_TEMPLATE_DIRECTORY="templates/QM-documents/" \
+  --env DOC_ID="FB|PB|DA|QMH|" \
   steadysense/pdfgen:latest
 ```
 with
@@ -44,3 +45,4 @@ with
 `$PATH-TEMPLATE-DIRECTORY`: directory containing the latex template files
 
 `$PATH-DOCUMENT-DIRECTORY`: directory containing the markdown files to convert
+

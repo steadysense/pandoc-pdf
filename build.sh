@@ -43,7 +43,7 @@ mkpdf () {
   OUTPUT=${ORIG_PATH}/build${INPUT#$DOCUMENT_DIR}
   OUTPUT=${OUTPUT//.md/.pdf}
   OUTPUT_PATH=$(dirname "${OUTPUT}")
-  DOC_ID="${DOC_ID:-FB\|PB\|DA\|QMH}"
+  DOC_ID="${DOC_ID:-FB\|PB\|DA\|AA\|QMH}"
 
   logd "INPUT $INPUT"
   logd "INPUT_FILE $INPUT_FILE"
@@ -92,7 +92,8 @@ fi
 logd "Searching documents in DOCUMENT_DIR $DOCUMENT_DIR"
 #find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA\|AA\|QMH" | parallel --jobs 200% mkpdf {}
 
-for f in $(find "$DOCUMENT_DIR" -name "*.md" | grep "$DOC_ID"); do
+
+for f in $(find "$DOCUMENT_DIR" -name "*.md" | grep -E "$DOC_ID"); do
   echo "$f"
   mkpdf "${f}"
 done
