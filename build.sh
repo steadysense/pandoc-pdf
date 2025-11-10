@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 HELP=$(cat <<-END
 Usage: ./build.sh [OPTIONS] [ARGUMENTS]
@@ -44,6 +44,7 @@ mkpdf () {
   OUTPUT=${OUTPUT//.md/.pdf}
   OUTPUT_PATH=$(dirname "${OUTPUT}")
   DOC_ID="${DOC_ID:-FB\|PB\|DA\|AA\|QMH}"
+  RELEASE="${RELEASE:-dev}"
 
   logd "INPUT $INPUT"
   logd "INPUT_FILE $INPUT_FILE"
@@ -51,6 +52,7 @@ mkpdf () {
   logd "OUTPUT_PATH $OUTPUT_PATH"
   logd "OUTPUT $OUTPUT"
   logd "DOC_ID $DOC_ID"
+  logd "RELEASE $RELEASE"
 
   PANDOC_TEMPLATE="main.tex"
   PANDOC_FILTER="/usr/local/bin/pandoc_filter"
@@ -67,9 +69,9 @@ mkpdf () {
     --listings \
     --filter "$PANDOC_FILTER" \
     --resource-path="$TEMPLATE_DIR" \
-    --data=dir="$TEMPLATE_DIR" \
+    --data-dir="$TEMPLATE_DIR" \
     --pdf-engine=lualatex \
-    --variable build-version="$VERSION"
+    -V release-tag="$RELEASE"
   spopd
 }
 

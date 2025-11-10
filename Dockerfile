@@ -24,4 +24,4 @@ COPY pandoc_filter /usr/local/bin/
 #ENTRYPOINT ["/entrypoint.sh"]
 ENTRYPOINT ["entrypoint.sh"]
 #CMD ["/build.sh"]
-CMD build.sh
+CMD "build.sh"
