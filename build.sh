@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 HELP=$(cat <<-END
 Usage: ./build.sh [OPTIONS] [ARGUMENTS]
