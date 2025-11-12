@@ -1,8 +1,7 @@
 name: Create and publish Docker image
 
 on:
-  push:
-    release: ['main']
+  workflow_dispatch:
 
 env:
   REGISTRY: docker.pkg.github.com
