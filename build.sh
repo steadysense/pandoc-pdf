@@ -30,6 +30,7 @@ mkpdf() {
   logi "Converting ${INPUT_ABS} -> ${OUTPUT}"
 
   pandoc "$INPUT_ABS" \
+    --from markdown+emoji \
     --to typst \
     --template "${TEMPLATE_DIR}/template.typ" \
     --toc \
