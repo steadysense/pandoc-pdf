@@ -10,6 +10,7 @@ RUN apk add --no-cache bash curl xz font-liberation ttf-dejavu fontconfig && \
 COPY typst/template.typ           /typst/template.typ
 COPY typst/steadylogo.pdf         /typst/steadylogo.pdf
 COPY typst/strip-toc-marker.lua   /typst/strip-toc-marker.lua
+COPY typst/fix-internal-links.lua /typst/fix-internal-links.lua
 COPY typst/table-columns.lua      /typst/table-columns.lua
 COPY typst/fix-typst-escaping.lua /typst/fix-typst-escaping.lua
 

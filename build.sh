@@ -34,6 +34,7 @@ mkpdf() {
     --template "${TEMPLATE_DIR}/template.typ" \
     --toc \
     --number-sections \
+    --lua-filter "${TEMPLATE_DIR}/fix-internal-links.lua" \
     --lua-filter "${TEMPLATE_DIR}/strip-toc-marker.lua" \
     --lua-filter "${TEMPLATE_DIR}/table-columns.lua" \
     --lua-filter "${TEMPLATE_DIR}/fix-typst-escaping.lua" \
