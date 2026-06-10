@@ -222,7 +222,7 @@ $endif$
 // -----------------------------------------------------------------------------
 
 #show raw.where(block: true): it => {
-  set text(font: "Courier New", size: 8pt)
+  set text(font: ("Courier New", "Liberation Mono", "DejaVu Sans Mono"), size: 8pt)
   block(
     fill:   luma(220),
     inset:  8pt,
@@ -233,7 +233,7 @@ $endif$
 }
 
 #show raw.where(block: false): it => {
-  set text(font: "Courier New", size: 9pt)
+  set text(font: ("Courier New", "Liberation Mono", "DejaVu Sans Mono"), size: 9pt)
   it
 }
 

@@ -13,6 +13,10 @@
 
 function Link(el)
   local target = el.target
+
+  -- Strip links with empty URLs — #link("") is invalid in Typst
+  if target == "" then return el.content end
+
   if target:sub(1, 1) ~= "#" then return nil end  -- leave external links alone
 
   local anchor = target:sub(2)
@@ -36,6 +40,12 @@ function Link(el)
     pandoc.Pandoc({ pandoc.Plain(el.content) }), "typst"
   ):match("^%s*(.-)%s*$")
 
+  -- Use context/query to gracefully degrade if the label doesn't exist
+  -- (e.g. cross-document links that point to a heading in another file).
+  -- If the label is found: render as clickable PDF link.
+  -- If not found: render as plain text — no error, no broken PDF.
   return pandoc.RawInline("typst",
-    "#link(label(\"" .. id .. "\"))[" .. content_typst .. "]")
+    "#context { let _t = query(<" .. id .. ">); " ..
+    "if _t.len() > 0 { link(<" .. id .. ">)[" .. content_typst .. "] } " ..
+    "else { [" .. content_typst .. "] } }")
 end
