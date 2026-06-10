@@ -1,7 +1,7 @@
 FROM pandoc/core:latest
 
 # Install Typst (musl build for Alpine), fonts and utilities
-RUN apk add --no-cache curl xz font-liberation ttf-dejavu fontconfig && \
+RUN apk add --no-cache bash curl xz font-liberation ttf-dejavu fontconfig && \
     curl -L "https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz" \
     | tar -xJ --strip-components=1 -C /usr/local/bin && \
     fc-cache -f
