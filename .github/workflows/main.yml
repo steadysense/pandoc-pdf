@@ -1,6 +1,8 @@
 name: Create and publish Docker image
 
 on:
+  push:
+    branches: ['**']
   workflow_dispatch:
 
 env:
@@ -29,5 +31,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          # Push to registry only on push to master or manual trigger.
+          # Feature and develop branches build the image but don't publish.
+          push: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
