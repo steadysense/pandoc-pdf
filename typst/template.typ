@@ -28,9 +28,13 @@
 // -----------------------------------------------------------------------------
 // Arial is used in the LaTeX template via fontspec.
 // Typst uses system fonts by default — "Arial" works on Windows/macOS.
-// On Linux (CI), "Liberation Sans" is a metric-compatible free substitute.
+// On Linux (CI/Docker), override via: --metadata body-font="Liberation Sans"
 
-#let body-font   = ("Arial", "Liberation Sans", "DejaVu Sans")
+$if(body-font)$
+#let body-font = "$body-font$"
+$else$
+#let body-font = ("Arial", "Liberation Sans", "DejaVu Sans")
+$endif$
 #let footer-size = 7pt
 #let small-size  = 9pt    // \small in LaTeX at 11pt base ≈ 10pt, we use 9pt
 

@@ -39,6 +39,7 @@ mkpdf() {
     --lua-filter "${TEMPLATE_DIR}/fix-typst-escaping.lua" \
     --resource-path "${TEMPLATE_DIR}:${INPUT_DIR}" \
     --metadata "release-tag=${RELEASE}" \
+    --metadata "body-font=Liberation Sans" \
     --output "${OUTPUT}"
 }
 
