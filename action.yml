@@ -5,6 +5,10 @@ inputs:
   document_directory:
     description: 'Directory containing the Markdown documents to convert'
     required: true
+  template_directory:
+    description: 'Directory containing Typst template files (optional — overrides the bundled templates)'
+    required: false
+    default: ''
   release_tag:
     description: 'Release tag shown in the PDF header (e.g. v2026-06-10.1)'
     required: false
@@ -19,5 +23,6 @@ runs:
   image: 'Dockerfile'
   env:
     INPUT_DOCUMENT_DIRECTORY: ${{ inputs.document_directory }}
+    INPUT_TEMPLATE_DIRECTORY: ${{ inputs.template_directory }}
     RELEASE: ${{ inputs.release_tag }}
     DOC_ID: ${{ inputs.doc_id }}

@@ -2,7 +2,7 @@
 
 set -euf -o pipefail
 
-TEMPLATE_DIR="/typst"
+TEMPLATE_DIR="${TEMPLATE_DIR:-/typst}"
 DOC_ID="${DOC_ID:-FB\|PB\|DA\|AA\|QMH}"
 RELEASE="${RELEASE:-draft}"
 ORIG_PATH="$(pwd)"
