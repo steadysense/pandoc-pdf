@@ -7,6 +7,11 @@ DOC_ID="${DOC_ID:-FB\|PB\|DA\|AA\|QMH}"
 RELEASE="${RELEASE:-draft}"
 ORIG_PATH="$(pwd)"
 
+# Typst resolves relative image paths from the working directory (where pandoc
+# creates its temp .typ file). Symlink the logo into the workspace so that
+# "steadylogo.pdf" in the template is found regardless of template source.
+ln -sf "${TEMPLATE_DIR}/steadylogo.pdf" "${ORIG_PATH}/steadylogo.pdf" 2>/dev/null || true
+
 logi() {
   echo "$@"
 }

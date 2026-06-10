@@ -110,8 +110,22 @@ end
 -- ── cell → Typst source ──────────────────────────────────────────────────────
 local function cell_to_typst(cell)
   local blocks = normalise_br(cell.content)
+  -- Strip trailing LineBreaks from Para/Plain blocks before serialising.
+  -- A trailing LineBreak becomes "\" in Typst output; when immediately
+  -- followed by the cell's closing "]", Typst reads "\]" as an escaped
+  -- literal "]" instead of a closing delimiter, leaving the cell unclosed.
+  for _, block in ipairs(blocks) do
+    if block.t == "Para" or block.t == "Plain" then
+      local inlines = block.content
+      while #inlines > 0 and inlines[#inlines].t == "LineBreak" do
+        inlines[#inlines] = nil
+      end
+    end
+  end
   local s = pandoc.write(pandoc.Pandoc(blocks), "typst")
-  return s:match("^%s*(.-)%s*$")
+  s = s:match("^%s*(.-)%s*$")                    -- trim surrounding whitespace
+  if s:sub(-1) == "\\" then s = s:sub(1, -2) end  -- safety: drop residual trailing backslash
+  return s
 end
 
 
