@@ -42,6 +42,7 @@ mkpdf() {
     --resource-path "${TEMPLATE_DIR}:${INPUT_DIR}" \
     --metadata "release-tag=${RELEASE}" \
     --metadata "body-font=Liberation Sans" \
+    --metadata "code-font=Liberation Mono" \
     --output "${OUTPUT}"
 }
 
