@@ -164,6 +164,17 @@ function Table(tbl)
     end
   end
 
+  -- Safety net: if every column ended up FIXED the table uses only absolute cm
+  -- widths and won't expand to the available page width.  This happens when all
+  -- body rows are empty (template / form tables).  Fall back to equal 1fr so
+  -- the table always stretches to 100%.
+  if #flex_ci == 0 then
+    for ci = 1, ncols do
+      specs[ci] = { kind = "flex", raw = 1.0 }
+      flex_ci[#flex_ci+1] = ci
+    end
+  end
+
   -- Normalise flex: map [min_raw … max_raw] → [MIN_FR … MAX_FR]
   if #flex_ci > 0 then
     local raw_min, raw_max = math.huge, 0
