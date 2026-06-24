@@ -1,7 +1,12 @@
-# pandoc-pdf
+# pandoc-pdf — Typst pipeline (testing)
 
 Converts Markdown documents to PDF using [Pandoc](https://pandoc.org/) and [Typst](https://typst.app/).
 Designed for SteadySense QM documents with a corporate template (header, footer, logo, metadata table).
+
+> **This is the `feature/typst-template` branch — testing only.**
+> The stable production pipeline (LaTeX/lualatex) lives on the
+> [`main`](https://github.com/steadysense/pandoc-pdf) branch
+> and is published as `ghcr.io/steadysense/pandoc-pdf:latest`.
 
 ## How it works
 
@@ -24,7 +29,7 @@ Output files are written to a `build/` subdirectory, mirroring the source direct
 
 | Tag | Branch | Status |
 |-----|--------|--------|
-| `latest` | `master` | stable (LaTeX pipeline) |
+| `latest` | `main` | stable (LaTeX pipeline) |
 | `typst` | `feature/typst-template` | testing (Typst pipeline) |
 
 ```bash
@@ -166,14 +171,14 @@ This repository is also a GitHub Action. Two variants are available:
 
 | Variant | Reference | Pipeline | Status |
 |---------|-----------|----------|--------|
-| Stable | `steadysense/pandoc-pdf@master` | LaTeX | production |
+| Stable | `steadysense/pandoc-pdf@main` | LaTeX | production |
 | Testing | `steadysense/pandoc-pdf@feature/typst-template` | Typst | testing |
 
 **Using the stable (LaTeX) pipeline:**
 
 ```yaml
 - name: Generate PDFs
-  uses: steadysense/pandoc-pdf@master
+  uses: steadysense/pandoc-pdf@main
   with:
     document_directory: ./QM-Documents
     release_tag: ${{ github.ref_name }}
