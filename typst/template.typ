@@ -10,8 +10,8 @@
 // 1. METADATA  (injected by Pandoc from YAML front matter)
 // -----------------------------------------------------------------------------
 
-#let project-id            = "$project-id$"
-#let template-title        = "$template-title$"
+#let project-id            = "$project-id$".replace("\\_", "_")
+#let template-title        = "$template-title$".replace("\\_", "_")
 #let template-identifier   = "$template-identifier$".replace("\\_", "_")
 #let template-version      = "$template-version$"
 #let template-author       = "$template-author$"
