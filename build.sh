@@ -32,6 +32,7 @@ mkpdf() {
   pandoc "$INPUT_ABS" \
     --from markdown+emoji \
     --to typst \
+    --wrap=none \
     --template "${TEMPLATE_DIR}/template.typ" \
     --toc \
     --number-sections \
