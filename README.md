@@ -22,8 +22,13 @@ Output files are written to a `build/` subdirectory, mirroring the source direct
 
 **1. Pull the image from GitHub Container Registry**
 
+| Tag | Branch | Status |
+|-----|--------|--------|
+| `latest` | `master` | stable (LaTeX pipeline) |
+| `typst` | `feature/typst-template` | testing (Typst pipeline) |
+
 ```bash
-docker pull ghcr.io/steadysense/pandoc-pdf:latest
+docker pull ghcr.io/steadysense/pandoc-pdf:typst
 ```
 
 **Or build it locally:**
@@ -41,7 +46,7 @@ docker run --rm \
   -v /path/to/your/documents:/docs \
   -e INPUT_DOCUMENT_DIRECTORY=/docs \
   -e RELEASE=draft \
-  ghcr.io/steadysense/pandoc-pdf:latest
+  ghcr.io/steadysense/pandoc-pdf:typst
 ```
 
 Converted PDFs appear in `/path/to/your/documents/build/`.
@@ -63,7 +68,7 @@ docker run --rm \
   -e INPUT_DOCUMENT_DIRECTORY=/docs \
   -e RELEASE=v2026-06-15 \
   -e DOC_ID=FB \
-  ghcr.io/steadysense/pandoc-pdf:latest
+  ghcr.io/steadysense/pandoc-pdf:typst
 ```
 
 ---
@@ -74,7 +79,9 @@ docker run --rm \
 
 - [Pandoc](https://pandoc.org/installing.html) >= 3.0
 - [Typst](https://github.com/typst/typst/releases) (add to `PATH`)
-- Fonts: Liberation Sans, Liberation Mono, Noto Emoji
+- Fonts:
+  - macOS: Arial, Courier New (system fonts — no install needed)
+  - Linux: Liberation Sans, Liberation Mono, Noto Emoji
 
 **2. Run a conversion**
 
@@ -91,9 +98,11 @@ PDFs are written to `build/` relative to `DOCUMENT_DIR`.
 **Convert a single file manually**
 
 ```bash
+# macOS
 pandoc my-document.md \
   --from markdown+emoji \
   --to typst \
+  --wrap=none \
   --template typst/template.typ \
   --toc \
   --number-sections \
@@ -103,10 +112,17 @@ pandoc my-document.md \
   --lua-filter typst/fix-typst-escaping.lua \
   --resource-path "typst:$(dirname my-document.md)" \
   --metadata "release-tag=draft" \
-  --metadata "body-font=Liberation Sans" \
-  --metadata "code-font=Liberation Mono" \
+  --metadata "body-font=Arial" \
+  --metadata "code-font=Courier New" \
   --output my-document.pdf
+
+# Linux (replace font metadata accordingly)
+#   --metadata "body-font=Liberation Sans"
+#   --metadata "code-font=Liberation Mono"
 ```
+
+> **Note:** `--wrap=none` is required to prevent pandoc from inserting soft line breaks
+> inside Typst string literals, which would cause visible line breaks in the PDF header.
 
 ---
 
@@ -146,11 +162,29 @@ See `testdocs/FB_2.2_02_Requirement-Specification.md` for a full example.
 
 ## GitHub Actions usage
 
-This repository is also a GitHub Action. Add it to a workflow:
+This repository is also a GitHub Action. Two variants are available:
+
+| Variant | Reference | Pipeline | Status |
+|---------|-----------|----------|--------|
+| Stable | `steadysense/pandoc-pdf@master` | LaTeX | production |
+| Testing | `steadysense/pandoc-pdf@feature/typst-template` | Typst | testing |
+
+**Using the stable (LaTeX) pipeline:**
 
 ```yaml
 - name: Generate PDFs
-  uses: steadysense/pandoc-pdf@main
+  uses: steadysense/pandoc-pdf@master
+  with:
+    document_directory: ./QM-Documents
+    release_tag: ${{ github.ref_name }}
+    doc_id: 'FB\|PB\|DA\|AA\|QMH'
+```
+
+**Using the Typst pipeline (testing) via pre-built GHCR image:**
+
+```yaml
+- name: Generate PDFs
+  uses: docker://ghcr.io/steadysense/pandoc-pdf:typst
   with:
     document_directory: ./QM-Documents
     release_tag: ${{ github.ref_name }}
