@@ -1,12 +1,13 @@
-# pandoc-pdf — Typst pipeline (testing)
+# pandoc-pdf
 
 Converts Markdown documents to PDF using [Pandoc](https://pandoc.org/) and [Typst](https://typst.app/).
 Designed for SteadySense QM documents with a corporate template (header, footer, logo, metadata table).
 
-> **This is the `feature/typst-template` branch — testing only.**
-> The stable production pipeline (LaTeX/lualatex) lives on the
-> [`main`](https://github.com/steadysense/pandoc-pdf) branch
-> and is published as `ghcr.io/steadysense/pandoc-pdf:latest`.
+The pre-built image is published to GitHub Container Registry on every merge to `main`:
+
+```
+ghcr.io/steadysense/pandoc-pdf:latest
+```
 
 ## How it works
 
@@ -25,15 +26,10 @@ Output files are written to a `build/` subdirectory, mirroring the source direct
 
 ### Option A: Docker (recommended)
 
-**1. Pull the image from GitHub Container Registry**
-
-| Tag | Branch | Status |
-|-----|--------|--------|
-| `latest` | `main` | stable (LaTeX pipeline) |
-| `typst` | `feature/typst-template` | testing (Typst pipeline) |
+**1. Pull the image**
 
 ```bash
-docker pull ghcr.io/steadysense/pandoc-pdf:typst
+docker pull ghcr.io/steadysense/pandoc-pdf:latest
 ```
 
 **Or build it locally:**
@@ -48,10 +44,11 @@ docker build -t pandoc-pdf .
 
 ```bash
 docker run --rm \
-  -v /path/to/your/documents:/docs \
-  -e INPUT_DOCUMENT_DIRECTORY=/docs \
+  -v /path/to/your/documents:/github/workspace/docs \
+  -w /github/workspace \
+  -e INPUT_DOCUMENT_DIRECTORY=docs \
   -e RELEASE=draft \
-  ghcr.io/steadysense/pandoc-pdf:typst
+  ghcr.io/steadysense/pandoc-pdf:latest
 ```
 
 Converted PDFs appear in `/path/to/your/documents/build/`.
@@ -69,11 +66,12 @@ Converted PDFs appear in `/path/to/your/documents/build/`.
 
 ```bash
 docker run --rm \
-  -v "$(pwd)/testdocs":/docs \
-  -e INPUT_DOCUMENT_DIRECTORY=/docs \
+  -v "$(pwd)/testdocs":/github/workspace/docs \
+  -w /github/workspace \
+  -e INPUT_DOCUMENT_DIRECTORY=docs \
   -e RELEASE=v2026-06-15 \
   -e DOC_ID=FB \
-  ghcr.io/steadysense/pandoc-pdf:typst
+  ghcr.io/steadysense/pandoc-pdf:latest
 ```
 
 ---
@@ -84,15 +82,13 @@ docker run --rm \
 
 - [Pandoc](https://pandoc.org/installing.html) >= 3.0
 - [Typst](https://github.com/typst/typst/releases) (add to `PATH`)
-- Fonts:
-  - macOS: Arial, Courier New (system fonts — no install needed)
-  - Linux: Liberation Sans, Liberation Mono, Noto Emoji
+- Fonts (Linux): Liberation Sans, Liberation Mono, Noto Emoji
 
 **2. Run a conversion**
 
 ```bash
-export TEMPLATE_DIR="$(pwd)/typst"
 export DOCUMENT_DIR=/path/to/your/documents
+export TEMPLATE_DIR="$(pwd)/typst"
 export RELEASE=draft
 
 bash build.sh
@@ -103,7 +99,6 @@ PDFs are written to `build/` relative to `DOCUMENT_DIR`.
 **Convert a single file manually**
 
 ```bash
-# macOS
 pandoc my-document.md \
   --from markdown+emoji \
   --to typst \
@@ -117,16 +112,12 @@ pandoc my-document.md \
   --lua-filter typst/fix-typst-escaping.lua \
   --resource-path "typst:$(dirname my-document.md)" \
   --metadata "release-tag=draft" \
-  --metadata "body-font=Arial" \
-  --metadata "code-font=Courier New" \
+  --metadata "body-font=Liberation Sans" \
+  --metadata "code-font=Liberation Mono" \
   --output my-document.pdf
-
-# Linux (replace font metadata accordingly)
-#   --metadata "body-font=Liberation Sans"
-#   --metadata "code-font=Liberation Mono"
 ```
 
-> **Note:** `--wrap=none` is required to prevent pandoc from inserting soft line breaks
+> **Note:** `--wrap=none` is required to prevent Pandoc from inserting soft line breaks
 > inside Typst string literals, which would cause visible line breaks in the PDF header.
 
 ---
@@ -167,14 +158,38 @@ See `testdocs/FB_2.2_02_Requirement-Specification.md` for a full example.
 
 ## GitHub Actions usage
 
-This repository is also a GitHub Action. Two variants are available:
+### Using the pre-built image directly (recommended)
 
-| Variant | Reference | Pipeline | Status |
-|---------|-----------|----------|--------|
-| Stable | `steadysense/pandoc-pdf@main` | LaTeX | production |
-| Testing | `steadysense/pandoc-pdf@feature/typst-template` | Typst | testing |
+Product repos use `docker run` with the pre-built GHCR image. Add a GHCR login step and pull the image:
 
-**Using the stable (LaTeX) pipeline:**
+```yaml
+- name: Log in to GitHub Container Registry
+  uses: docker/login-action@v3
+  with:
+    registry: ghcr.io
+    username: ${{ github.actor }}
+    password: ${{ secrets.GITHUB_TOKEN }}
+
+- name: Build PDFs
+  run: |
+    docker run --rm \
+      -v "${{ github.workspace }}:/github/workspace" \
+      -w /github/workspace \
+      -e INPUT_DOCUMENT_DIRECTORY="your-docs/" \
+      -e DOC_ID="FB" \
+      -e RELEASE="${{ steps.tagger.outputs.tag }}" \
+      ghcr.io/steadysense/pandoc-pdf:latest
+```
+
+The job needs `packages: read` permission:
+
+```yaml
+permissions:
+  contents: write
+  packages: read
+```
+
+### Using the action directly
 
 ```yaml
 - name: Generate PDFs
@@ -184,19 +199,6 @@ This repository is also a GitHub Action. Two variants are available:
     release_tag: ${{ github.ref_name }}
     doc_id: 'FB\|PB\|DA\|AA\|QMH'
 ```
-
-**Using the Typst pipeline (testing) via pre-built GHCR image:**
-
-```yaml
-- name: Generate PDFs
-  uses: docker://ghcr.io/steadysense/pandoc-pdf:typst
-  with:
-    document_directory: ./QM-Documents
-    release_tag: ${{ github.ref_name }}
-    doc_id: 'FB\|PB\|DA\|AA\|QMH'
-```
-
-PDFs are placed in `./QM-Documents/build/`.
 
 **Action inputs**
 
