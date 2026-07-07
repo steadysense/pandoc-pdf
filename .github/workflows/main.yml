@@ -30,10 +30,8 @@ jobs:
       - name: Determine image tag
         id: tag
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "value=latest" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref }}" == "refs/heads/feature/typst-template" ]]; then
-            echo "value=typst" >> "$GITHUB_OUTPUT"
           else
             echo "value=" >> "$GITHUB_OUTPUT"
           fi
@@ -42,7 +40,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          # Push to registry on master (→ :latest), feature/typst-template (→ :typst),
-          # or manual trigger (→ tag determined above, falls back to :latest).
+          # Push to registry on main (→ :latest) or manual trigger (→ :latest).
           push: ${{ steps.tag.outputs.value != '' || github.event_name == 'workflow_dispatch' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.value || 'latest' }}
