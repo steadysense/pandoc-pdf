@@ -1,99 +1,70 @@
 #!/bin/bash
 
-HELP=$(cat <<-END
-Usage: ./build.sh [OPTIONS] [ARGUMENTS]
+set -euf -o pipefail
 
-Arguments:
-    filename   markdown file to be converted
+TEMPLATE_DIR="${TEMPLATE_DIR:-/typst}"
+DOC_ID="${DOC_ID:-FB\|PB\|DA\|AA\|QMH}"
+RELEASE="${RELEASE:-draft}"
+ORIG_PATH="$(pwd)"
 
-Options:
-    --all   Recursively convert all *.md files in the working directory to *.pdf files.
-            Output files are stored in ./build
+# Typst resolves relative image paths from the working directory (where pandoc
+# creates its temp .typ file). Symlink the logo into the workspace so that
+# "steadylogo.pdf" in the template is found regardless of template source.
+ln -sf "${TEMPLATE_DIR}/steadylogo.pdf" "${ORIG_PATH}/steadylogo.pdf" 2>/dev/null || true
 
-Examples:
-    Single file: ./build.sh '2.2_Entwicklung/FB_2.2_02_Requirement-Specification.md'
-    All files:   ./build.sh --all
-END
-)
-
-logd () {
-  if [[ $DEBUG ]]; then
-    logd "$@";
-  fi
+logi() {
+  echo "$@"
 }
 
-logi () {
-  echo "$@";
-}
+mkpdf() {
+  local INPUT="$1"
+  local INPUT_ABS
+  INPUT_ABS="$(realpath "$INPUT")"
+  local INPUT_DIR
+  INPUT_DIR="$(dirname "$INPUT_ABS")"
 
-spushd () {
-    command pushd "$@" || exit 1 > /dev/null
-}
+  local OUTPUT="${ORIG_PATH}/build${INPUT#$DOCUMENT_DIR}"
+  OUTPUT="${OUTPUT//.md/.pdf}"
+  mkdir -p "$(dirname "$OUTPUT")"
 
-spopd () {
-    command popd || exit 1 > /dev/null
-}
+  logi "Converting ${INPUT_ABS} -> ${OUTPUT}"
 
-mkpdf () {
-  ORIG_PATH=$(pwd)
-
-  INPUT="$1"
-  INPUT_FILE=$(basename "$INPUT")
-  INPUT_PATH=$(dirname "$INPUT")
-  OUTPUT=${ORIG_PATH}/build${INPUT#$DOCUMENT_DIR}
-  OUTPUT=${OUTPUT//.md/.pdf}
-  OUTPUT_PATH=$(dirname "${OUTPUT}")
-  DOC_ID="${DOC_ID:-FB\|PB\|DA\|AA\|QMH}"
-
-  logd "INPUT $INPUT"
-  logd "INPUT_FILE $INPUT_FILE"
-  logd "INPUT_PATH $INPUT_PATH"
-  logd "OUTPUT_PATH $OUTPUT_PATH"
-  logd "OUTPUT $OUTPUT"
-  logd "DOC_ID $DOC_ID"
-
-  PANDOC_TEMPLATE="main.tex"
-  PANDOC_FILTER="/usr/local/bin/pandoc_filter"
-
-  mkdir -p "$OUTPUT_PATH"
-
-  logi "Converting ${INPUT} to ${OUTPUT}"
-  spushd "$INPUT_PATH"
-  pandoc "$INPUT_FILE" \
-    -o "$OUTPUT" \
-    --top-level-division=chapter \
-    --template="$PANDOC_TEMPLATE" \
+  pandoc "$INPUT_ABS" \
+    --from markdown+emoji \
+    --to typst \
+    --wrap=none \
+    --template "${TEMPLATE_DIR}/template.typ" \
     --toc \
-    --listings \
-    --filter "$PANDOC_FILTER" \
-    --resource-path="$TEMPLATE_DIR" \
-    --data=dir="$TEMPLATE_DIR" \
-    --pdf-engine=lualatex \
-    --variable build-version="$VERSION"
-  spopd
+    --number-sections \
+    --lua-filter "${TEMPLATE_DIR}/fix-internal-links.lua" \
+    --lua-filter "${TEMPLATE_DIR}/strip-toc-marker.lua" \
+    --lua-filter "${TEMPLATE_DIR}/table-columns.lua" \
+    --lua-filter "${TEMPLATE_DIR}/fix-typst-escaping.lua" \
+    --resource-path "${TEMPLATE_DIR}:${INPUT_DIR}" \
+    --metadata "release-tag=${RELEASE}" \
+    --metadata "body-font=Liberation Sans" \
+    --metadata "code-font=Liberation Mono" \
+    --output "${OUTPUT}"
 }
 
-export -f mkpdf logi logd spushd spopd
+export -f mkpdf logi
 
-logd "Working Directory $(pwd)"
-logd "$@"
+if [[ "${1:-}" = "-h" || "${1:-}" = "--help" ]]; then
+  cat <<-END
+Usage: build.sh
 
-for arg in "$@"; do
-  logd "$arg";
-done
-
-logd "Finished checking args"
-
-if [[ $1 = "-h" || $1 = "--help" ]]; then
-    logi "$HELP"
-    exit 0
+Environment variables:
+    DOCUMENT_DIR   Directory containing the documents to convert
+    DOC_ID         Regex pattern to filter documents (default: FB|PB|DA|AA|QMH)
+    RELEASE        Release tag shown in the PDF header (default: draft)
+END
+  exit 0
 fi
 
-logd "Searching documents in DOCUMENT_DIR $DOCUMENT_DIR"
-#find "$DOCUMENT_DIR" -name "*.md" | grep "FB\|PB\|DA\|AA\|QMH" | parallel --jobs 200% mkpdf {}
-
+logi "Searching for documents in: $DOCUMENT_DIR"
+logi "Filter pattern: $DOC_ID"
+logi "Release tag:    $RELEASE"
 
 for f in $(find "$DOCUMENT_DIR" -name "*.md" | grep -E "$DOC_ID"); do
-  echo "$f"
-  mkpdf "${f}"
+  mkpdf "$f"
 done

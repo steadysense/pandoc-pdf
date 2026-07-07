@@ -14,7 +14,11 @@ def action(elem, doc):
         if re.match(":\w*:", elem.text) is not None:
             if ":white_check_mark:" in elem.text:
                 elem.text = ":check-mark-button:"
-            return RawInline(text="\emoji{" + elem.text.strip(":") + "}", format="tex")
+            if ":large_orange_diamond:" in elem.text:
+                elem.text = ":large-orange-diamond:"
+            return RawInline(text="\\emoji{" + elem.text.strip(":") + "}", format="tex")
+
+    return None
 
 
 def main():

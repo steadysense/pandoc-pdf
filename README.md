@@ -1,81 +1,213 @@
 # pandoc-pdf
 
-Converts Markdown documents to PDF using [Pandoc](https://pandoc.org/) and LaTeX (lualatex).
+Converts Markdown documents to PDF using [Pandoc](https://pandoc.org/) and [Typst](https://typst.app/).
 Designed for SteadySense QM documents with a corporate template (header, footer, logo, metadata table).
 
-> **New Typst pipeline available for testing**
-> A faster, LaTeX-free pipeline using [Typst](https://typst.app/) is in development on the
-> [`feature/typst-template`](https://github.com/steadysense/pandoc-pdf/tree/feature/typst-template) branch
-> and published as `ghcr.io/steadysense/pandoc-pdf:typst`.
-> This branch (`main`) remains the stable production pipeline.
+The pre-built image is published to GitHub Container Registry on every merge to `main`:
 
----
+```
+ghcr.io/steadysense/pandoc-pdf:latest
+```
 
 ## How it works
 
 `build.sh` scans a directory for `*.md` files matching a filename pattern, then calls Pandoc for each file.
-Pandoc converts Markdown to PDF via the `main.tex` LaTeX template using `lualatex` as the PDF engine.
+Pandoc converts Markdown to Typst using the bundled template and Lua filters, then Typst renders the final PDF.
 Output files are written to a `build/` subdirectory, mirroring the source directory structure.
 
 ---
 
-## GitHub Actions usage
+## Local usage
 
-This repository is a GitHub Action. Add it to a workflow:
+### Prerequisites
 
-```yaml
-- name: Generate PDFs
-  uses: steadysense/pandoc-pdf@main
-  with:
-    template_directory: ./QM-Documents/templates
-    document_directory: ./QM-Documents
-```
+- [Docker](https://docs.docker.com/get-docker/) (recommended — no local Pandoc/Typst install needed)
+- **Or** install manually: `pandoc` >= 3.0, `typst`, `bash`
 
-**Action inputs**
+### Option A: Docker (recommended)
 
-| Input                | Required | Description                                          |
-|----------------------|----------|------------------------------------------------------|
-| `template_directory` | yes      | Directory containing the LaTeX template files        |
-| `document_directory` | yes      | Directory containing the Markdown files to convert   |
-
-PDFs are placed in `<document_directory>/build/`.
-
----
-
-## Docker usage
-
-**Pull the image**
+**1. Pull the image**
 
 ```bash
 docker pull ghcr.io/steadysense/pandoc-pdf:latest
 ```
 
-**Run a conversion**
+**Or build it locally:**
+
+```bash
+git clone <this-repo>
+cd pandoc-pdf
+docker build -t pandoc-pdf .
+```
+
+**2. Run a conversion**
 
 ```bash
 docker run --rm \
-  -v /path/to/templates:/github/workspace/templates \
-  -v /path/to/documents:/github/workspace/documents \
-  -e INPUT_TEMPLATE_DIRECTORY=templates/ \
-  -e INPUT_DOCUMENT_DIRECTORY=documents/ \
+  -v /path/to/your/documents:/github/workspace/docs \
+  -w /github/workspace \
+  -e INPUT_DOCUMENT_DIRECTORY=docs \
+  -e RELEASE=draft \
   ghcr.io/steadysense/pandoc-pdf:latest
 ```
 
-PDFs are written to `/path/to/documents/build/`.
+Converted PDFs appear in `/path/to/your/documents/build/`.
+
+**Environment variables**
+
+| Variable                   | Default               | Description                                               |
+|----------------------------|-----------------------|-----------------------------------------------------------|
+| `INPUT_DOCUMENT_DIRECTORY` | *(required)*          | Path to the directory containing `.md` files              |
+| `INPUT_TEMPLATE_DIRECTORY` | `/typst` (bundled)    | Override with a custom Typst template directory           |
+| `RELEASE`                  | `draft`               | Release tag shown in the PDF header (e.g. `v2026-06-10`) |
+| `DOC_ID`                   | `FB\|PB\|DA\|AA\|QMH` | Regex to filter which `.md` files are converted           |
+
+**Example: convert only `FB` files with a release tag**
+
+```bash
+docker run --rm \
+  -v "$(pwd)/testdocs":/github/workspace/docs \
+  -w /github/workspace \
+  -e INPUT_DOCUMENT_DIRECTORY=docs \
+  -e RELEASE=v2026-06-15 \
+  -e DOC_ID=FB \
+  ghcr.io/steadysense/pandoc-pdf:latest
+```
+
+---
+
+### Option B: Without Docker
+
+**1. Install dependencies**
+
+- [Pandoc](https://pandoc.org/installing.html) >= 3.0
+- [Typst](https://github.com/typst/typst/releases) (add to `PATH`)
+- Fonts (Linux): Liberation Sans, Liberation Mono, Noto Emoji
+
+**2. Run a conversion**
+
+```bash
+export DOCUMENT_DIR=/path/to/your/documents
+export TEMPLATE_DIR="$(pwd)/typst"
+export RELEASE=draft
+
+bash build.sh
+```
+
+PDFs are written to `build/` relative to `DOCUMENT_DIR`.
+
+**Convert a single file manually**
+
+```bash
+pandoc my-document.md \
+  --from markdown+emoji \
+  --to typst \
+  --wrap=none \
+  --template typst/template.typ \
+  --toc \
+  --number-sections \
+  --lua-filter typst/fix-internal-links.lua \
+  --lua-filter typst/strip-toc-marker.lua \
+  --lua-filter typst/table-columns.lua \
+  --lua-filter typst/fix-typst-escaping.lua \
+  --resource-path "typst:$(dirname my-document.md)" \
+  --metadata "release-tag=draft" \
+  --metadata "body-font=Liberation Sans" \
+  --metadata "code-font=Liberation Mono" \
+  --output my-document.pdf
+```
+
+> **Note:** `--wrap=none` is required to prevent Pandoc from inserting soft line breaks
+> inside Typst string literals, which would cause visible line breaks in the PDF header.
 
 ---
 
 ## Document format
 
-Each Markdown file must include a YAML front matter block with template metadata.
-See the documents in your QM repository for examples.
+Each Markdown file must include a YAML front matter block:
+
+```yaml
+---
+project-id: " "
+template-title: Requirement Specification
+template-identifier: FB_2.2_02
+template-version: 4
+template-author: V. Mustermann
+template-creation-date: 2024-01-15
+template-reviewer: A. Reviewer
+template-review-date: 2024-01-20
+template-approver: B. Approver
+template-approval-date: 2024-01-25
+---
+
+# Section 1
+...
+```
+
+See `testdocs/FB_2.2_02_Requirement-Specification.md` for a full example.
 
 **Supported Markdown features**
 
 - Tables, images, code blocks, numbered/bulleted lists
 - Image sizing: `![alt](path){width=600px}`
+- Emoji shortcodes: `:check-mark-button:`, `:warning:`, etc.
 - Internal anchor links
-- `[TOC]` marker (generates a table of contents)
+- `[TOC]` marker (stripped automatically; TOC is generated from the template)
+
+---
+
+## GitHub Actions usage
+
+### Using the pre-built image directly (recommended)
+
+Product repos use `docker run` with the pre-built GHCR image. Add a GHCR login step and pull the image:
+
+```yaml
+- name: Log in to GitHub Container Registry
+  uses: docker/login-action@v3
+  with:
+    registry: ghcr.io
+    username: ${{ github.actor }}
+    password: ${{ secrets.GITHUB_TOKEN }}
+
+- name: Build PDFs
+  run: |
+    docker run --rm \
+      -v "${{ github.workspace }}:/github/workspace" \
+      -w /github/workspace \
+      -e INPUT_DOCUMENT_DIRECTORY="your-docs/" \
+      -e DOC_ID="FB" \
+      -e RELEASE="${{ steps.tagger.outputs.tag }}" \
+      ghcr.io/steadysense/pandoc-pdf:latest
+```
+
+The job needs `packages: read` permission:
+
+```yaml
+permissions:
+  contents: write
+  packages: read
+```
+
+### Using the action directly
+
+```yaml
+- name: Generate PDFs
+  uses: steadysense/pandoc-pdf@main
+  with:
+    document_directory: ./QM-Documents
+    release_tag: ${{ github.ref_name }}
+    doc_id: 'FB\|PB\|DA\|AA\|QMH'
+```
+
+**Action inputs**
+
+| Input                | Required | Default               | Description                                    |
+|----------------------|----------|-----------------------|------------------------------------------------|
+| `document_directory` | yes      |                       | Directory containing the Markdown files        |
+| `template_directory` | no       | bundled `/typst`      | Override the bundled Typst templates           |
+| `release_tag`        | no       | `draft`               | Release tag shown in the PDF header            |
+| `doc_id`             | no       | `FB\|PB\|DA\|AA\|QMH` | Regex pattern to filter which files to convert |
 
 ---
 
@@ -83,24 +215,16 @@ See the documents in your QM repository for examples.
 
 ```
 pandoc-pdf/
-├── templates/                # LaTeX templates and assets (mounted at runtime)
-│   ├── main.tex              # Main LaTeX document template
-│   ├── preamble.sty          # LaTeX style definitions
-│   ├── pandoc_filter.py      # Pandoc filter for custom processing
-│   └── steadylogo.pdf        # Logo used in the header
-├── build.sh                  # Conversion script (called inside Docker)
-├── entrypoint.sh             # Docker entrypoint
-├── Dockerfile                # Docker image definition (pandoc/latex base)
+├── typst/                    # Typst template and Lua filters (bundled in Docker image)
+│   ├── template.typ          # Main document template
+│   ├── steadylogo.pdf        # Logo used in the header
+│   ├── fix-internal-links.lua
+│   ├── strip-toc-marker.lua
+│   ├── table-columns.lua
+│   └── fix-typst-escaping.lua
+├── build.sh                  # Conversion script (called inside Docker or directly)
+├── entrypoint.sh             # Docker entrypoint (maps action inputs to env vars)
+├── Dockerfile                # Docker image definition
 ├── action.yml                # GitHub Action definition
-├── requirements.txt          # Python dependencies for pandoc_filter
-└── texpkgs.txt               # Additional LaTeX packages installed at build time
+└── testdocs/                 # Example QM documents
 ```
-
----
-
-## GHCR image tags
-
-| Tag | Branch | Pipeline | Status |
-|-----|--------|----------|--------|
-| `latest` | `main` | LaTeX / lualatex | stable, production |
-| `typst` | `feature/typst-template` | Typst | testing |

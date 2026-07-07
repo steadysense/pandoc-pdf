@@ -1,16 +1,28 @@
-# pdf-generator.yml
 name: 'pandoc-pdf'
-description: 'Generate pdf files based on latex qm templates and markdown files.'
+description: 'Generate PDF files from Markdown using Pandoc and Typst.'
 
 inputs:
-  template_directory:  # id of input
-    description: 'Directory containing the qm latex templates'
+  document_directory:
+    description: 'Directory containing the Markdown documents to convert'
     required: true
-
-  document_directory:  # id of input
-    description: 'Directory containing the documents to convert'
-    required: true
+  template_directory:
+    description: 'Directory containing Typst template files (optional — overrides the bundled templates)'
+    required: false
+    default: ''
+  release_tag:
+    description: 'Release tag shown in the PDF header (e.g. v2026-06-10.1)'
+    required: false
+    default: 'draft'
+  doc_id:
+    description: 'Regex pattern to filter which .md files are converted (default: FB|PB|DA|AA|QMH)'
+    required: false
+    default: 'FB\|PB\|DA\|AA\|QMH'
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    INPUT_DOCUMENT_DIRECTORY: ${{ inputs.document_directory }}
+    INPUT_TEMPLATE_DIRECTORY: ${{ inputs.template_directory }}
+    RELEASE: ${{ inputs.release_tag }}
+    DOC_ID: ${{ inputs.doc_id }}

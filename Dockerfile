@@ -1,27 +1,25 @@
-FROM pandoc/latex:2.14
+FROM pandoc/core:latest
 
-RUN wget -q -P /usr/share/fonts/ https://github.com/samuelngs/apple-emoji-linux/releases/latest/download/AppleColorEmoji.ttf
-RUN apk add texmf-dist python3 py3-pip bash fontconfig ttf-dejavu msttcorefonts-installer && update-ms-fonts && fc-cache -f
+# Install Typst (musl build for Alpine), fonts and utilities
+RUN apk add --no-cache bash curl xz font-liberation ttf-dejavu font-noto-emoji fontconfig && \
+    curl -L "https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz" \
+    | tar -xJ --strip-components=1 -C /usr/local/bin && \
+    fc-cache -f
 
-COPY ./requirements.txt /
-COPY ./texpkgs.txt /
+# Bundle template files
+COPY typst/template.typ           /typst/template.typ
+COPY typst/steadylogo.pdf         /typst/steadylogo.pdf
+COPY typst/strip-toc-marker.lua   /typst/strip-toc-marker.lua
+COPY typst/fix-internal-links.lua /typst/fix-internal-links.lua
+COPY typst/table-columns.lua      /typst/table-columns.lua
+COPY typst/fix-typst-escaping.lua /typst/fix-typst-escaping.lua
 
-RUN pip3 install -r /requirements.txt
-
-RUN tlmgr install $(cat /texpkgs.txt)
-
-RUN apk add parallel
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY build.sh      /usr/local/bin/build.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/build.sh
 
 RUN mkdir -p /github/workspace
 WORKDIR /github/workspace
 
-# Copies your code file from your action repository to the filesystem path `/` of the container
-COPY entrypoint.sh /usr/local/bin/
-COPY build.sh /usr/local/bin/
-COPY pandoc_filter /usr/local/bin/
-
-# Code file to execute when the docker container starts up (`entrypoint.sh`)
-#ENTRYPOINT ["/entrypoint.sh"]
 ENTRYPOINT ["entrypoint.sh"]
-#CMD ["/build.sh"]
-CMD build.sh
+CMD ["build.sh"]
