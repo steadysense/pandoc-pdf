@@ -259,6 +259,14 @@ $endif$
 // This is especially important for long link texts and file paths in tables.
 #show regex("[_\-]"): it => it + sym.zws
 
+// Allow line-breaking around parentheses. GS1 product identifiers such as
+// "(01)09120095900373(10)2607A(8012)3.1.0" have no spaces/underscores/hyphens,
+// so without break opportunities at the "(NN)" application-identifier groups
+// they overflow their table cell. Break AFTER ")" and BEFORE "(" so each group
+// can wrap onto the next line without altering the visible text.
+#show regex("\)"): it => it + sym.zws
+#show regex("\("): it => sym.zws + it
+
 #show link: it => {
   set text(fill: black)
   underline(it)

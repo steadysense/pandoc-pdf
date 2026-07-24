@@ -25,6 +25,17 @@ function RawInline(el)
   end
 end
 
+-- Pandoc's Typst writer silently DROPS raw LaTeX, so a "\newpage" / "\pagebreak"
+-- marker (parsed as a RawBlock of format "tex") produces no break at all.
+-- Translate it to a raw Typst pagebreak so the long-standing "\newpage"
+-- convention used throughout these documents keeps working, in any document.
+function RawBlock(el)
+  if (el.format == "tex" or el.format == "latex")
+     and (el.text:match("^\\newpage") or el.text:match("^\\pagebreak")) then
+    return pandoc.RawBlock("typst", "#pagebreak()")
+  end
+end
+
 local function strip_trailing_linebreaks(inlines)
   while #inlines > 0 and inlines[#inlines].t == "LineBreak" do
     table.remove(inlines)
