@@ -107,9 +107,67 @@ local function normalise_br(blocks)
   ).content
 end
 
+-- ── overflow guard: insert zero-width breaks into over-long tokens ───────────
+-- The template's show-rules add break opportunities after _ - ( ), which covers
+-- most long strings (file names, UDIs). But a token with NONE of those (e.g. a
+-- long hash, an unbroken code, a very long compound word) still can't wrap and
+-- overflows its cell. This is the generic fallback: given a column's character
+-- capacity `cap`, split any word longer than `cap` with U+200B zero-width spaces
+-- so Typst can wrap it. Zero-width space is invisible and copy-paste-safe, and
+-- only ADDS break points — Typst still fills each line greedily.
+local ZWS = utf8.char(0x200B)
+
+-- Longest run of characters with NO break opportunity the template's show-rules
+-- can already use. Those rules break after _ - ) / and before ( — so a run ends
+-- at any of those. If this longest run already fits the column, the show-rules
+-- handle wrapping on their own (giving nice, semantically-aligned breaks) and we
+-- leave the word untouched. Only a run that genuinely can't fit needs help.
+local function longest_unbreakable(word)
+  local codes = {}
+  for _, cp in utf8.codes(word) do codes[#codes + 1] = cp end
+  local maxrun, run = 0, 0
+  for i = 1, #codes do
+    run = run + 1
+    if run > maxrun then maxrun = run end
+    local c   = utf8.char(codes[i])
+    local nxt = codes[i + 1] and utf8.char(codes[i + 1]) or ""
+    if c:match("[_%-%)/]") or nxt == "(" then run = 0 end  -- break opportunity here
+  end
+  return maxrun
+end
+
+-- Insert a ZWS every `cap` codepoints inside a single whitespace-free word.
+-- Fallback only: no-op unless the word's longest unbreakable run exceeds `cap`,
+-- so ordinary UDIs / file names keep breaking at their ( ) _ - boundaries.
+local function chunk_word(word, cap)
+  local n = utf8.len(word)
+  if not n or n <= cap then return word end             -- fits, or invalid UTF-8
+  if longest_unbreakable(word) <= cap then return word end  -- show-rules suffice
+  local out, count = {}, 0
+  for _, cp in utf8.codes(word) do
+    out[#out + 1] = utf8.char(cp)
+    count = count + 1
+    if count % cap == 0 and count < n then out[#out + 1] = ZWS end
+  end
+  return table.concat(out)
+end
+
+-- Walk a cell's blocks and chunk every Str whose text exceeds `cap`.
+-- (In the Pandoc AST a Str is a maximal run of non-space characters, i.e. one
+-- word, so chunking Str text directly is safe.)
+local function chunk_blocks(blocks, cap)
+  if not cap or cap <= 0 then return blocks end
+  return pandoc.walk_block(pandoc.Div(blocks), {
+    Str = function(el)
+      local t = chunk_word(el.text, cap)
+      if t ~= el.text then return pandoc.Str(t) end
+    end
+  }).content
+end
+
 -- ── cell → Typst source ──────────────────────────────────────────────────────
-local function cell_to_typst(cell)
-  local blocks = normalise_br(cell.content)
+local function cell_to_typst(cell, cap)
+  local blocks = chunk_blocks(normalise_br(cell.content), cap)
   -- Strip trailing LineBreaks from Para/Plain blocks before serialising.
   -- A trailing LineBreak becomes "\" in Typst output; when immediately
   -- followed by the cell's closing "]", Typst reads "\]" as an escaped
@@ -155,7 +213,7 @@ function Table(tbl)
       local chars = math.max(data_wrd, math.ceil(data_len * 0.7))
       local cm    = math.max(MIN_FIXED_CM, chars / CHARS_PER_CM + FIXED_PAD_CM)
       cm = math.floor(cm * 10 + 0.5) / 10
-      specs[ci] = { kind = "fixed", val = string.format("%.1fcm", cm) }
+      specs[ci] = { kind = "fixed", cm = cm, val = string.format("%.1fcm", cm) }
     else
       -- FLEX: weight based on longest content anywhere (head + body)
       local w = math.max(MIN_FR, all_len / 40)
@@ -191,6 +249,7 @@ function Table(tbl)
         norm = MIN_FR + (specs[ci].raw - raw_min) / (raw_max - raw_min) * (MAX_FR - MIN_FR)
       end
       norm = math.floor(norm * 10 + 0.5) / 10
+      specs[ci].fr  = norm
       specs[ci].val = string.format("%.1ffr", norm)
     end
   end
@@ -200,11 +259,45 @@ function Table(tbl)
   for ci = 1, ncols do parts[ci] = specs[ci].val end
   local col_arg = "(" .. table.concat(parts, ", ") .. ")"
 
+  -- Estimate each column's character capacity, so cell_to_typst can pre-break
+  -- any token that would overflow. Widths are approximate — we err on the small
+  -- side (SAFETY < 1) so we break a touch early rather than let text run out.
+  --   Page text width  = A4 210mm − left 25mm − right 15mm = 170mm = 17.0cm
+  --   Per-column inset  = 5pt each side (set in the emitted #table below) ≈ 0.35cm
+  --   Chars per cm      = 5.8 at 9pt body; wide tables render at 8pt → ~6.6
+  local PAGE_TEXT_WIDTH_CM = 17.0
+  local INSET_CM           = 0.35
+  local SAFETY             = 0.9
+  local MIN_CAP            = 6
+  local cpc = (ncols >= WIDE_TABLE_COLS) and 6.6 or CHARS_PER_CM
+
+  local fixed_total, sum_fr = 0, 0
+  for ci = 1, ncols do
+    if specs[ci].kind == "fixed" then fixed_total = fixed_total + specs[ci].cm
+    else                              sum_fr      = sum_fr      + (specs[ci].fr or 0) end
+  end
+  local flex_avail = PAGE_TEXT_WIDTH_CM - fixed_total - ncols * INSET_CM
+  if flex_avail < 2.0 then flex_avail = 2.0 end
+
+  local caps = {}
+  for ci = 1, ncols do
+    local width_cm
+    if specs[ci].kind == "fixed" then
+      width_cm = specs[ci].cm - INSET_CM
+    elseif sum_fr > 0 then
+      width_cm = flex_avail * specs[ci].fr / sum_fr
+    else
+      width_cm = flex_avail
+    end
+    local cap = math.floor(width_cm * cpc * SAFETY)
+    caps[ci] = (cap < MIN_CAP) and MIN_CAP or cap
+  end
+
   -- Serialise cells
   local lines = {}
   local function add_cells(cells)
-    for _, cell in ipairs(cells) do
-      lines[#lines+1] = "  [" .. cell_to_typst(cell) .. "]"
+    for ci, cell in ipairs(cells) do
+      lines[#lines+1] = "  [" .. cell_to_typst(cell, caps[ci]) .. "]"
     end
   end
   for _, r in ipairs(head_rows) do add_cells(r) end
