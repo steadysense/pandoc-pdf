@@ -147,12 +147,14 @@ function Table(tbl)
   for ci = 1, ncols do
     -- Measure body rows for classification (data drives width)
     local data_len, data_wrd = measure_col(body_rows, ci)
-    -- Also measure head for flex weight estimation
+    -- Measure head for flex weight estimation and FIXED minimum word width
+    local head_len, head_wrd = measure_col(head_rows, ci)
     local all_len, _         = measure_col(all_rows_combined, ci)
 
     if data_len <= FIXED_CHAR_LIMIT then
-      -- FIXED: base width on the longest data word + small padding
-      local chars = math.max(data_wrd, math.ceil(data_len * 0.7))
+      -- FIXED: base width on the longest data or header word + small padding
+      -- Including head_wrd ensures header text is never clipped in fixed cols.
+      local chars = math.max(data_wrd, head_wrd, math.ceil(data_len * 0.7))
       local cm    = math.max(MIN_FIXED_CM, chars / CHARS_PER_CM + FIXED_PAD_CM)
       cm = math.floor(cm * 10 + 0.5) / 10
       specs[ci] = { kind = "fixed", val = string.format("%.1fcm", cm) }
