@@ -82,6 +82,8 @@ logi "Searching for documents in: $DOCUMENT_DIR"
 logi "Filter pattern: $DOC_ID"
 logi "Release tag:    $RELEASE"
 
+FAILED=0
 for f in $(find "$DOCUMENT_DIR" -name "*.md" | grep -E "$DOC_ID"); do
-  mkpdf "$f"
+  mkpdf "$f" || { logi "WARNING: failed to convert $f"; FAILED=1; }
 done
+exit $FAILED
